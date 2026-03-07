@@ -5,15 +5,20 @@
  * Endpoints:
  *   POST /api/transcribe  → ontvangt audio (FormData), retourneert transcript
  *   POST /api/consult     → ontvangt transcript, retourneert drie AI-tekstblokken
+ *   GET  /                → serveert de frontend (public/index.html)
  */
-
 import express from "express";
 import multer from "multer";
 import cors from "cors";
 import OpenAI from "openai";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -21,23 +26,21 @@ const upload = multer({ storage: multer.memoryStorage() });
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
+// Serveer de frontend statisch vanuit de public/ map
+app.use(express.static(path.join(__dirname, "public")));
+
 // ─────────────────────────────────────────────────────────────────────────────
 // OpenAI client
 // ─────────────────────────────────────────────────────────────────────────────
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // zet OPENAI_API_KEY in .env
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Placeholder: vervang dit door een echte STT-service (Whisper, Azure, Google…)
 // ─────────────────────────────────────────────────────────────────────────────
 async function transcribeAudio(audioBuffer) {
-  // DUMMY — geeft altijd een voorbeeldtranscriptie terug.
-  // Wanneer je een echte service wilt gebruiken:
-  //   1. Stuur audioBuffer naar Whisper API of een andere STT-service.
-  //   2. Retourneer de transcriptietekst als string.
   console.log(`[transcribeAudio] Ontvangen buffer: ${audioBuffer.length} bytes`);
-
   return `Arts: Goedemiddag mevrouw De Vries, wat brengt u vandaag bij ons?
 Patiënt: Ik heb al een paar weken last van extreme vermoeidheid. Ik slaap wel genoeg maar ik ben 's ochtends al uitgeput. Ook voel ik me koud, zelfs als het warm is.
 Arts: Heeft u ook andere klachten, zoals haaruitval, gewichtsverandering of stemmingswisselingen?
@@ -51,10 +54,7 @@ Arts: We gaan bloed prikken om de schildklierfunctie te controleren en een volle
 // Prompt-template voor de OpenAI Responses API
 // ─────────────────────────────────────────────────────────────────────────────
 function buildSystemPrompt() {
-  return `Je bent een AI-doktersassistent in een Nederlandse huisartsenpraktijk. 
-Je ontvangt de volledige transcriptie van een consult (arts én patiënt). 
-
-Geef ALTIJD en UITSLUITEND de volgende drie blokken terug, in exact dit formaat:
+  return `Je bent een AI-doktersassistent in een Nederlandse huisartsenpraktijk. Je ontvangt de volledige transcriptie van een consult (arts én patiënt). Geef ALTIJD en UITSLUITEND de volgende drie blokken terug, in exact dit formaat:
 
 1) MEDISCH VERSLAG (VOOR DOSSIER)
 [Schrijf een kort SOEP-verslag (Subjectief, Objectief, Evaluatie, Plan). Maximaal 8 zinnen. Professionele medische taal. Alleen gebaseerd op de transcriptie.]
@@ -67,9 +67,7 @@ Geef ALTIJD en UITSLUITEND de volgende drie blokken terug, in exact dit formaat:
 - [bullet 2]
 - [bullet 3]
 
-Bij blok 3: focus expliciet op blinde vlekken en onderherkende aandoeningen bij vrouwen, waaronder endometriose, hormonale stoornissen (schildklier, PCOS, perimenopauze), atypische cardiovasculaire presentaties, auto-immuunziekten en cyclusgebonden klachtverergering. Formuleer ALTIJD als suggesties met woorden als "overweeg", "denk ook aan" of "bij twijfel".
-
-Gebruik NOOIT andere secties of koppen. Schrijf de nummers en titels exact zoals hierboven.`;
+Bij blok 3: focus expliciet op blinde vlekken en onderherkende aandoeningen bij vrouwen, waaronder endometriose, hormonale stoornissen (schildklier, PCOS, perimenopauze), atypische cardiovasculaire presentaties, auto-immuunziekten en cyclusgebonden klachtverergering. Formuleer ALTIJD als suggesties met woorden als "overweeg", "denk ook aan" of "bij twijfel". Gebruik NOOIT andere secties of koppen. Schrijf de nummers en titels exact zoals hierboven.`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -81,20 +79,12 @@ function parseConsultOutput(text) {
     patient_explanation: "",
     clinician_alerts: "",
   };
-
-  // Splits op de genummerde koppen
-  const block1 = text.match(
-    /1\)\s*MEDISCH VERSLAG.*?\n([\s\S]*?)(?=2\)\s*UITLEG|$)/i
-  );
-  const block2 = text.match(
-    /2\)\s*UITLEG.*?\n([\s\S]*?)(?=3\)\s*AANDACHTSPUNTEN|$)/i
-  );
-  const block3 = text.match(/3\)\s*AANDACHTSPUNTEN.*?\n([\s\S]*?)$/i);
-
+  const block1 = text.match(/1\)\s*MEDISCH VERSLAG.*?\n([\s\S]*?)(?=2\)\s*UITLEG|$)/i);
+  const block2 = text.match(/2\)\s*UITLEG.*?\n([\s\S]*?)(?=3\)\s*AANDACHTSPUNTEN|$)/i);
+  const block3 = text.match(/3\)\s*AANDACHTSPUNTEN.*?\n([\s\S]*)$/i);
   if (block1) sections.medical_note = block1[1].trim();
   if (block2) sections.patient_explanation = block2[1].trim();
   if (block3) sections.clinician_alerts = block3[1].trim();
-
   return sections;
 }
 
@@ -107,7 +97,6 @@ app.post("/api/transcribe", upload.single("audio"), async (req, res) => {
     if (!audioBuffer) {
       return res.status(400).json({ error: "Geen audiobestand ontvangen." });
     }
-
     const transcript = await transcribeAudio(audioBuffer);
     return res.json({ transcript });
   } catch (err) {
@@ -118,56 +107,43 @@ app.post("/api/transcribe", upload.single("audio"), async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/consult
-//
-// Request body:  { "transcript": "Arts: ... Patiënt: ..." }
-// Response body: { "medical_note": "...", "patient_explanation": "...", "clinician_alerts": "..." }
-//
-// Voorbeeld request:
-// {
-//   "transcript": "Arts: Goedemiddag... Patiënt: Ik heb last van vermoeidheid..."
-// }
-//
-// Voorbeeld response:
-// {
-//   "medical_note": "S: Patiënte, 42 jaar, presenteert zich met drie maanden durende...",
-//   "patient_explanation": "Geachte mevrouw De Vries, de dokter vermoedt dat...",
-//   "clinician_alerts": "- Overweeg hypothyreoïdie als primaire diagnose...\n- Denk ook aan..."
-// }
 // ─────────────────────────────────────────────────────────────────────────────
 app.post("/api/consult", async (req, res) => {
   const { transcript } = req.body;
-
   if (!transcript || transcript.trim().length === 0) {
     return res.status(400).json({ error: "Geen transcriptie ontvangen." });
   }
-
   try {
-    // OpenAI Responses API (nieuwste stijl, november 2024+)
     const response = await openai.responses.create({
       model: "gpt-4o",
       instructions: buildSystemPrompt(),
       input: `TRANSCRIPTIE VAN HET CONSULT:\n\n${transcript}`,
     });
-
-    // Haal de tekst op uit het response-object
     const rawText =
       response.output_text ??
-      response.output?.find((b) => b.type === "message")?.content
+      response.output
+        ?.find((b) => b.type === "message")
+        ?.content
         ?.filter((c) => c.type === "output_text")
         ?.map((c) => c.text)
         ?.join("") ??
       "";
-
     if (!rawText) {
       return res.status(500).json({ error: "Geen output van het model ontvangen." });
     }
-
     const parsed = parseConsultOutput(rawText);
     return res.json(parsed);
   } catch (err) {
     console.error("[/api/consult]", err);
     return res.status(500).json({ error: "AI-verwerking mislukt: " + err.message });
   }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Catch-all: stuur altijd index.html terug voor niet-API routes
+// ─────────────────────────────────────────────────────────────────────────────
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
