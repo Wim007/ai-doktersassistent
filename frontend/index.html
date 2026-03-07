@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ambient AI Doktersassistent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:       #0f1923;
+      --ink-soft:  #3a4a58;
+      --ink-muted: #6b7f8e;
+      --paper:     #f5f3ef;
+      --paper-2:   #ede9e1;
+      --white:     #ffffff;
+      --teal:      #0d7c72;
+      --teal-dark: #085f57;
+      --teal-pale: #e6f4f2;
+      --amber:     #c9760c;
+      --amber-pale:#fdf3e3;
+      --red:       #b03535;
+      --red-pale:  #faeaea;
+      --border:    #d6d0c7;
+      --shadow:    0 2px 12px rgba(15,25,35,.08);
+      --shadow-lg: 0 8px 32px rgba(15,25,35,.12);
+      --radius:    10px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--ink);
+      color: var(--white);
+      padding: 18px 36px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 16px rgba(0,0,0,.18);
+    }
+    .logo-mark {
+      width: 38px; height: 38px;
+      background: var(--teal);
+      border-radius: 50%;
+      display: grid; place-items: center;
+      flex-shrink: 0;
+    }
+    .logo-mark svg { width: 20px; height: 20px; }
+    .header-title { font-family: 'DM Serif Display', serif; font-size: 1.25rem; letter-spacing: .01em; }
+    .header-subtitle { font-size: .75rem; color: #8fa3b0; margin-top: 1px; }
+    .header-spacer { flex: 1; }
+    .disclaimer-badge {
+      font-size: .68rem;
+      background: rgba(201,118,12,.18);
+      color: #f5c87a;
+      border: 1px solid rgba(201,118,12,.3);
+      padding: 5px 12px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 260px;
+      line-height: 1.4;
+    }
+
+    /* ── Main layout ── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px 64px;
+    }
+
+    /* ── Recording card ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px 32px;
+      margin-bottom: 24px;
+    }
+    .card-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+      color: var(--ink);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-title .step {
+      width: 24px; height: 24px;
+      background: var(--teal);
+      color: white;
+      border-radius: 50%;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .75rem;
+      font-weight: 600;
+      display: grid; place-items: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Controls ── */
+    .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+
+    button {
+      font-family: 'DM Sans', sans-serif;
+      font-size: .875rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      padding: 10px 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all .18s ease;
+    }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--teal);
+      color: white;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--teal-dark); }
+
+    .btn-danger {
+      background: var(--red);
+      color: white;
+    }
+    .btn-danger:hover:not(:disabled) { background: #8a2a2a; }
+
+    .btn-secondary {
+      background: var(--paper-2);
+      color: var(--ink);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover:not(:disabled) { background: var(--border); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--teal);
+      border: 1px solid var(--teal);
+      font-size: .8rem;
+      padding: 7px 14px;
+    }
+    .btn-ghost:hover:not(:disabled) { background: var(--teal-pale); }
+
+    /* ── Status pill ── */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: .8rem;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+    .status-idle     { background: var(--paper-2); color: var(--ink-muted); }
+    .status-recording { background: #fdecea; color: var(--red); }
+    .status-processing { background: var(--teal-pale); color: var(--teal-dark); }
+    .status-done      { background: #eaf4ea; color: #1f7a35; }
+
+    .pulse-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .4; transform: scale(.7); }
+    }
+
+    /* ── Transcript area ── */
+    .transcript-box {
+      width: 100%;
+      min-height: 100px;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 14px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .85rem;
+      color: var(--ink-soft);
+      resize: vertical;
+      outline: none;
+      transition: border-color .15s;
+      line-height: 1.6;
+    }
+    .transcript-box:focus { border-color: var(--teal); }
+
+    /* ── Output panels ── */
+    .panels-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 8px;
+    }
+
+    .output-panel {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      min-height: 220px;
+    }
+
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .panel-label {
+      font-family: 'DM Serif Display', serif;
+      font-size: .95rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-icon {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      display: grid; place-items: center;
+      flex-shrink: 0;
+    }
+    .panel-icon.blue  { background: #e8f0fe; color: #1a56db; }
+    .panel-icon.green { background: #eaf7ec; color: #1a7a35; }
+    .panel-icon.amber { background: var(--amber-pale); color: var(--amber); }
+
+    .panel-body {
+      padding: 16px 18px;
+      flex: 1;
+      font-size: .875rem;
+      color: var(--ink-soft);
+      white-space: pre-wrap;
+      line-height: 1.7;
+    }
+    .panel-body.empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ink-muted);
+      font-style: italic;
+      font-size: .82rem;
+    }
+
+    /* ── Alerts panel bullets ── */
+    .alert-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .alert-list li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      background: var(--amber-pale);
+      border-left: 3px solid var(--amber);
+      border-radius: 0 6px 6px 0;
+      font-size: .85rem;
+      line-height: 1.55;
+      color: var(--ink);
+    }
+    .alert-list li::before {
+      content: "!";
+      width: 18px; height: 18px;
+      min-width: 18px;
+      background: var(--amber);
+      color: white;
+      border-radius: 50%;
+      font-size: .7rem;
+      font-weight: 700;
+      display: grid; place-items: center;
+      margin-top: 1px;
+    }
+
+    /* ── Loader ── */
+    .loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 20px;
+      color: var(--ink-muted);
+      font-size: .85rem;
+    }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--ink);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: .85rem;
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all .25s ease;
+      pointer-events: none;
+      max-width: 320px;
+      z-index: 999;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: var(--red); }
+
+    /* ── Timer ── */
+    .rec-timer {
+      font-variant-numeric: tabular-nums;
+      font-weight: 500;
+      color: var(--red);
+      font-size: .9rem;
+    }
+
+    /* ── Divider ── */
+    .section-label {
+      font-size: .7rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin: 32px 0 14px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Header ─── -->
+<header>
+  <div class="logo-mark">
+    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+    </svg>
+  </div>
+  <div>
+    <div class="header-title">Ambient AI Doktersassistent</div>
+    <div class="header-subtitle">Huisartsenpraktijk — Prototype MVP</div>
+  </div>
+  <div class="header-spacer"></div>
+  <div class="disclaimer-badge">
+    ⚠️ Prototype. Alleen ter ondersteuning.<br>De arts blijft volledig verantwoordelijk voor diagnose en behandeling.
+  </div>
+</header>
+
+<!-- ─── Main ─── -->
+<main>
+
+  <!-- Stap 1: Opname -->
+  <div class="card">
+    <div class="card-title">
+      <span class="step">1</span>
+      Audio-opname van het consult
+    </div>
+
+    <div class="controls">
+      <button class="btn-primary" id="btn-start" onclick="startRecording()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="12" r="6"/></svg>
+        Start opname
+      </button>
+      <button class="btn-danger" id="btn-stop" onclick="stopRecording()" disabled>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+        Stop opname
+      </button>
+      <span class="status-pill status-idle" id="status-pill">
+        <span>Wacht op opname</span>
+      </span>
+      <span class="rec-timer" id="rec-timer" style="display:none">00:00</span>
+    </div>
+  </div>
+
+  <!-- Stap 2: Transcriptie -->
+  <div class="card">
+    <div class="card-title">
+      <span class="step">2</span>
+      Transcriptie
+      <span style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--ink-muted);font-weight:400">(automatisch ingevuld na het stoppen van de opname)</span>
+    </div>
+    <textarea class="transcript-box" id="transcript" rows="6"
+      placeholder="De transcriptie verschijnt hier na de opname…"></textarea>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;">
+      <button class="btn-primary" id="btn-consult" onclick="generateConsult()" disabled>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        Genereer AI-advies
+      </button>
+      <button class="btn-secondary" onclick="clearAll()">Alles wissen</button>
+    </div>
+  </div>
+
+  <!-- Stap 3: Output panels -->
+  <div class="section-label">AI-uitvoer</div>
+  <div class="panels-grid">
+
+    <!-- Paneel A: Medisch verslag -->
+    <div class="output-panel">
+      <div class="panel-header">
+        <div class="panel-label">
+          <div class="panel-icon blue">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          Medisch verslag (voor dossier)
+        </div>
+        <button class="btn-ghost" onclick="copyPanel('medical-note')">Kopieer</button>
+      </div>
+      <div class="panel-body empty" id="medical-note">Nog geen output gegenereerd.</div>
+    </div>
+
+    <!-- Paneel B: Uitleg patiënt -->
+    <div class="output-panel">
+      <div class="panel-header">
+        <div class="panel-label">
+          <div class="panel-icon green">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          Uitleg voor de patiënt (eenvoudig Nederlands)
+        </div>
+        <button class="btn-ghost" onclick="copyPanel('patient-explanation')">Kopieer</button>
+      </div>
+      <div class="panel-body empty" id="patient-explanation">Nog geen output gegenereerd.</div>
+    </div>
+
+    <!-- Paneel C: Aandachtspunten arts -->
+    <div class="output-panel">
+      <div class="panel-header">
+        <div class="panel-label">
+          <div class="panel-icon amber">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          Aandachtspunten voor de arts
+        </div>
+        <button class="btn-ghost" onclick="copyPanel('clinician-alerts')">Kopieer</button>
+      </div>
+      <div class="panel-body empty" id="clinician-alerts">Nog geen output gegenereerd.</div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const API_BASE = "http://localhost:3001"; // pas aan als back-end elders draait
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  let mediaRecorder = null;
+  let audioChunks   = [];
+  let timerInterval = null;
+  let secondsElapsed = 0;
+
+  // ── Recording ──────────────────────────────────────────────────────────────
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunks  = [];
+      mediaRecorder = new MediaRecorder(stream, { mimeType: getSupportedMimeType() });
+
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+      mediaRecorder.onstop = handleRecordingStopped;
+      mediaRecorder.start(250); // chunks elke 250 ms
+
+      setUIRecording(true);
+      startTimer();
+    } catch (err) {
+      showToast("Microfoon niet beschikbaar: " + err.message, true);
+    }
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(t => t.stop());
+    }
+    stopTimer();
+    setUIRecording(false);
+    setStatus("processing", "Audio verwerken…");
+  }
+
+  async function handleRecordingStopped() {
+    const mimeType = getSupportedMimeType();
+    const blob = new Blob(audioChunks, { type: mimeType });
+    const formData = new FormData();
+    formData.append("audio", blob, "opname.webm");
+
+    try {
+      const res  = await fetch(`${API_BASE}/api/transcribe`, { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Transcriptie mislukt");
+
+      document.getElementById("transcript").value = data.transcript;
+      document.getElementById("btn-consult").disabled = false;
+      setStatus("done", "Transcriptie gereed");
+      showToast("Transcriptie ontvangen ✓");
+    } catch (err) {
+      setStatus("idle", "Fout bij transcriptie");
+      showToast("Fout: " + err.message, true);
+    }
+  }
+
+  function getSupportedMimeType() {
+    const types = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
+    return types.find(t => MediaRecorder.isTypeSupported(t)) || "";
+  }
+
+  // ── Consult genereren ──────────────────────────────────────────────────────
+  async function generateConsult() {
+    const transcript = document.getElementById("transcript").value.trim();
+    if (!transcript) { showToast("Voer eerst een transcriptie in.", true); return; }
+
+    setAllPanelsLoading();
+    document.getElementById("btn-consult").disabled = true;
+
+    try {
+      const res  = await fetch(`${API_BASE}/api/consult`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ transcript }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "AI-verwerking mislukt");
+
+      setPanel("medical-note",        data.medical_note);
+      setPanel("patient-explanation", data.patient_explanation);
+      setAlertsPanel(data.clinician_alerts);
+      showToast("AI-advies gegenereerd ✓");
+    } catch (err) {
+      clearPanels();
+      showToast("Fout: " + err.message, true);
+    } finally {
+      document.getElementById("btn-consult").disabled = false;
+    }
+  }
+
+  // ── Panel helpers ──────────────────────────────────────────────────────────
+  function setPanel(id, text) {
+    const el = document.getElementById(id);
+    el.classList.remove("empty");
+    el.textContent = text || "(geen inhoud ontvangen)";
+  }
+
+  function setAlertsPanel(text) {
+    const el = document.getElementById("clinician-alerts");
+    el.classList.remove("empty");
+    if (!text) { el.textContent = "(geen aandachtspunten ontvangen)"; return; }
+
+    const bullets = text.split("\n")
+      .map(l => l.replace(/^[-–•*]\s*/, "").trim())
+      .filter(Boolean);
+
+    if (bullets.length === 0) { el.textContent = text; return; }
+
+    const ul = document.createElement("ul");
+    ul.className = "alert-list";
+    bullets.forEach(b => {
+      const li = document.createElement("li");
+      li.textContent = b;
+      ul.appendChild(li);
+    });
+    el.innerHTML = "";
+    el.appendChild(ul);
+  }
+
+  function setAllPanelsLoading() {
+    ["medical-note", "patient-explanation", "clinician-alerts"].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.add("empty");
+      el.innerHTML = `<div class="loader"><div class="spinner"></div> AI denkt na…</div>`;
+    });
+  }
+
+  function clearPanels() {
+    ["medical-note", "patient-explanation", "clinician-alerts"].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.add("empty");
+      el.textContent = "Nog geen output gegenereerd.";
+    });
+  }
+
+  function clearAll() {
+    document.getElementById("transcript").value = "";
+    document.getElementById("btn-consult").disabled = true;
+    clearPanels();
+    setStatus("idle", "Wacht op opname");
+  }
+
+  // ── Copy ───────────────────────────────────────────────────────────────────
+  function copyPanel(id) {
+    const el   = document.getElementById(id);
+    const text = el.innerText || el.textContent;
+    navigator.clipboard.writeText(text)
+      .then(() => showToast("Tekst gekopieerd ✓"))
+      .catch(() => showToast("Kopiëren mislukt", true));
+  }
+
+  // ── UI helpers ─────────────────────────────────────────────────────────────
+  function setUIRecording(active) {
+    document.getElementById("btn-start").disabled = active;
+    document.getElementById("btn-stop").disabled  = !active;
+  }
+
+  function setStatus(type, label) {
+    const pill = document.getElementById("status-pill");
+    pill.className = `status-pill status-${type}`;
+    pill.innerHTML = type === "recording"
+      ? `<span class="pulse-dot"></span><span>${label}</span>`
+      : `<span>${label}</span>`;
+  }
+
+  function startTimer() {
+    secondsElapsed = 0;
+    const timerEl  = document.getElementById("rec-timer");
+    timerEl.style.display = "inline";
+    setStatus("recording", "Opname bezig");
+
+    timerInterval = setInterval(() => {
+      secondsElapsed++;
+      const m = String(Math.floor(secondsElapsed / 60)).padStart(2, "0");
+      const s = String(secondsElapsed % 60).padStart(2, "0");
+      timerEl.textContent = `${m}:${s}`;
+    }, 1000);
+  }
+
+  function stopTimer() {
+    clearInterval(timerInterval);
+    document.getElementById("rec-timer").style.display = "none";
+  }
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  let toastTimeout;
+  function showToast(msg, isError = false) {
+    const t = document.getElementById("toast");
+    t.textContent  = msg;
+    t.className    = "toast show" + (isError ? " error" : "");
+    clearTimeout(toastTimeout);
+    toastTimeout   = setTimeout(() => { t.className = "toast"; }, 3200);
+  }
+</script>
+</body>
+</html>
