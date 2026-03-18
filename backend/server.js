@@ -114,20 +114,14 @@ app.post("/api/consult", async (req, res) => {
     return res.status(400).json({ error: "Geen transcriptie ontvangen." });
   }
   try {
-    const response = await openai.responses.create({
+    const response = await openai.chat.completions.create({
       model: "gpt-4o",
-      instructions: buildSystemPrompt(),
-      input: `TRANSCRIPTIE VAN HET CONSULT:\n\n${transcript}`,
+      messages: [
+        { role: "system", content: buildSystemPrompt() },
+        { role: "user", content: `TRANSCRIPTIE VAN HET CONSULT:\n\n${transcript}` },
+      ],
     });
-    const rawText =
-      response.output_text ??
-      response.output
-        ?.find((b) => b.type === "message")
-        ?.content
-        ?.filter((c) => c.type === "output_text")
-        ?.map((c) => c.text)
-        ?.join("") ??
-      "";
+    const rawText = response.choices[0]?.message?.content ?? "";
     if (!rawText) {
       return res.status(500).json({ error: "Geen output van het model ontvangen." });
     }
