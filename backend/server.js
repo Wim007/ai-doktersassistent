@@ -10,7 +10,7 @@
 import express from "express";
 import multer from "multer";
 import cors from "cors";
-import OpenAI from "openai";
+import OpenAI, { toFile } from "openai";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -37,17 +37,17 @@ const openai = new OpenAI({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Placeholder: vervang dit door een echte STT-service (Whisper, Azure, Google…)
+// Whisper transcriptie via OpenAI API
 // ─────────────────────────────────────────────────────────────────────────────
-async function transcribeAudio(audioBuffer) {
+async function transcribeAudio(audioBuffer, mimeType = "audio/webm") {
   console.log(`[transcribeAudio] Ontvangen buffer: ${audioBuffer.length} bytes`);
-  return `Arts: Goedemiddag mevrouw De Vries, wat brengt u vandaag bij ons?
-Patiënt: Ik heb al een paar weken last van extreme vermoeidheid. Ik slaap wel genoeg maar ik ben 's ochtends al uitgeput. Ook voel ik me koud, zelfs als het warm is.
-Arts: Heeft u ook andere klachten, zoals haaruitval, gewichtsverandering of stemmingswisselingen?
-Patiënt: Ja, eigenlijk wel. Mijn haar valt meer uit dan normaal, en ik ben een paar kilo aangekomen zonder dat ik anders eet. Mijn man zegt ook dat ik wat somberder ben.
-Arts: Hoe lang speelt dit al? En heeft u dit eerder gehad?
-Patiënt: Een maand of drie al. Eerder niet zo. Ik ben 42 jaar.
-Arts: We gaan bloed prikken om de schildklierfunctie te controleren en een volledig bloedbeeld te maken. Ik vermoed een schildklierprobleem maar we moeten dat bevestigen.`;
+  const file = await toFile(audioBuffer, "opname.webm", { type: mimeType });
+  const response = await openai.audio.transcriptions.create({
+    file,
+    model: "whisper-1",
+    language: "nl",
+  });
+  return response.text;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ app.post("/api/transcribe", upload.single("audio"), async (req, res) => {
     if (!audioBuffer) {
       return res.status(400).json({ error: "Geen audiobestand ontvangen." });
     }
-    const transcript = await transcribeAudio(audioBuffer);
+    const transcript = await transcribeAudio(audioBuffer, req.file.mimetype);
     return res.json({ transcript });
   } catch (err) {
     console.error("[/api/transcribe]", err);
