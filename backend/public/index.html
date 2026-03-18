@@ -1009,7 +1009,14 @@
       const res  = await fetch(`${API_BASE}/api/consult`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ transcript }),
+        body:    JSON.stringify({
+          transcript,
+          gender:     selectedPatient?.gender     ?? null,
+          complaint:  selectedPatient?.complaint  ?? null,
+          age:        selectedPatient?.age        ?? null,
+          history:    selectedPatient?.history    ?? null,
+          medication: selectedPatient?.medication ?? null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "AI-verwerking mislukt");
@@ -1035,18 +1042,36 @@
 
   function setAlertsPanel(text) {
     const el = document.getElementById("clinician-alerts");
-    el.classList.remove("empty");
-    if (!text) { el.textContent = "(geen aandachtspunten ontvangen)"; return; }
 
-    const bullets = text.split("\n")
-      .map(l => l.replace(/^[-–•*]\s*/, "").trim())
+    // Geen data: patiënt is man, of klacht valt buiten risicocategorieën
+    if (!text) {
+      el.classList.add("empty");
+      el.textContent = "Niet van toepassing voor deze patiënt.";
+      return;
+    }
+
+    const trimmed = text.trim();
+
+    // Model geeft aan dat er geen gender-specifieke aandachtspunten zijn
+    if (/^geen gender-specifieke aandachtspunten\.?$/i.test(trimmed)) {
+      el.classList.add("empty");
+      el.textContent = "Geen gender-specifieke aandachtspunten.";
+      return;
+    }
+
+    // Toon aandachtspunten als genummerde bullets
+    el.classList.remove("empty");
+
+    const lines = trimmed
+      .split("\n")
+      .map(l => l.replace(/^\d+[.)]\s*/, "").replace(/^[-–•*]\s*/, "").trim())
       .filter(Boolean);
 
-    if (bullets.length === 0) { el.textContent = text; return; }
+    if (lines.length === 0) { el.textContent = trimmed; return; }
 
     const ul = document.createElement("ul");
     ul.className = "alert-list";
-    bullets.forEach(b => {
+    lines.forEach(b => {
       const li = document.createElement("li");
       li.textContent = b;
       ul.appendChild(li);
