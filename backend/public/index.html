@@ -3,36 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ambient AI Doktersassistent</title>
+  <title>PraktijkAssistent</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --ink:       #0f1923;
-      --ink-soft:  #3a4a58;
-      --ink-muted: #6b7f8e;
-      --paper:     #f5f3ef;
-      --paper-2:   #ede9e1;
-      --white:     #ffffff;
-      --teal:      #0d7c72;
-      --teal-dark: #085f57;
-      --teal-pale: #e6f4f2;
-      --amber:     #c9760c;
-      --amber-pale:#fdf3e3;
-      --red:       #b03535;
-      --red-pale:  #faeaea;
-      --border:    #d6d0c7;
-      --shadow:    0 2px 12px rgba(15,25,35,.08);
-      --shadow-lg: 0 8px 32px rgba(15,25,35,.12);
-      --radius:    10px;
+      --blue:        #2563EB;
+      --blue-dark:   #1D4ED8;
+      --blue-light:  #EFF6FF;
+      --purple:      #7C3AED;
+      --purple-light:#F5F3FF;
+      --green:       #16A34A;
+      --green-light: #F0FDF4;
+      --text:        #111827;
+      --text-soft:   #374151;
+      --muted:       #6B7280;
+      --border:      #E5E7EB;
+      --white:       #FFFFFF;
+      --bg:          #F8FAFC;
+      --bg-2:        #EFF2F7;
+      --red:         #b03535;
+      --red-pale:    #faeaea;
+      --shadow:      0 2px 12px rgba(17,24,39,.08);
+      --shadow-lg:   0 8px 32px rgba(17,24,39,.12);
+      --radius:      10px;
     }
 
     body {
       font-family: 'DM Sans', sans-serif;
-      background: var(--paper);
-      color: var(--ink);
+      background: var(--bg);
+      color: var(--text);
       height: 100vh;
       overflow: hidden;
       font-size: 15px;
@@ -43,7 +45,7 @@
 
     /* ── Header ── */
     header {
-      background: var(--ink);
+      background: var(--text);
       color: var(--white);
       padding: 16px 28px;
       display: flex;
@@ -55,7 +57,7 @@
     }
     .logo-mark {
       width: 36px; height: 36px;
-      background: var(--teal);
+      background: var(--blue);
       border-radius: 50%;
       display: grid; place-items: center;
       flex-shrink: 0;
@@ -66,9 +68,9 @@
     .header-spacer { flex: 1; }
     .disclaimer-badge {
       font-size: .67rem;
-      background: rgba(201,118,12,.18);
-      color: #f5c87a;
-      border: 1px solid rgba(201,118,12,.3);
+      background: rgba(124,58,237,.18);
+      color: #c4b5fd;
+      border: 1px solid rgba(124,58,237,.3);
       padding: 5px 12px;
       border-radius: 20px;
       text-align: center;
@@ -113,12 +115,12 @@
     .col-heading-title {
       font-family: 'DM Serif Display', serif;
       font-size: .95rem;
-      color: var(--ink);
+      color: var(--text);
     }
     .date-badge {
       font-size: .72rem;
-      color: var(--ink-muted);
-      background: var(--paper-2);
+      color: var(--muted);
+      background: var(--bg-2);
       border: 1px solid var(--border);
       padding: 3px 9px;
       border-radius: 12px;
@@ -127,7 +129,7 @@
     .patient-item {
       padding: 13px 18px;
       cursor: pointer;
-      border-bottom: 1px solid var(--paper-2);
+      border-bottom: 1px solid var(--bg-2);
       border-left: 3px solid transparent;
       display: grid;
       grid-template-columns: 42px 1fr 10px;
@@ -135,28 +137,28 @@
       align-items: start;
       transition: background .14s, border-left-color .14s;
     }
-    .patient-item:hover { background: var(--paper); }
+    .patient-item:hover { background: var(--bg); }
     .patient-item.selected {
-      background: var(--teal-pale);
-      border-left-color: var(--teal);
+      background: var(--blue-light);
+      border-left-color: var(--blue);
     }
 
     .patient-time {
       font-size: .78rem;
       font-weight: 600;
-      color: var(--ink-muted);
+      color: var(--muted);
       padding-top: 2px;
       font-variant-numeric: tabular-nums;
     }
     .patient-name {
       font-size: .875rem;
       font-weight: 500;
-      color: var(--ink);
+      color: var(--text);
       margin-bottom: 3px;
     }
     .patient-complaint {
       font-size: .76rem;
-      color: var(--ink-muted);
+      color: var(--muted);
       line-height: 1.4;
     }
     .status-dot {
@@ -166,8 +168,8 @@
       flex-shrink: 0;
     }
     .status-dot.planned  { background: var(--border); }
-    .status-dot.active   { background: var(--teal); animation: pulse 1.2s infinite; }
-    .status-dot.done     { background: #1f7a35; }
+    .status-dot.active   { background: var(--blue); animation: pulse 1.2s infinite; }
+    .status-dot.done     { background: var(--green); }
 
     .patient-status-row {
       grid-column: 2;
@@ -182,24 +184,24 @@
       border-radius: 10px;
       font-weight: 500;
     }
-    .patient-status-pill.planned  { background: var(--paper-2); color: var(--ink-muted); }
-    .patient-status-pill.active   { background: var(--teal-pale); color: var(--teal-dark); }
-    .patient-status-pill.done     { background: #eaf4ea; color: #1f7a35; }
+    .patient-status-pill.planned  { background: var(--bg-2); color: var(--muted); }
+    .patient-status-pill.active   { background: var(--blue-light); color: var(--blue-dark); }
+    .patient-status-pill.done     { background: var(--green-light); color: var(--green); }
 
     /* ── Middle: Contextkaart ── */
     .col-context {
-      background: var(--paper);
+      background: var(--bg);
       border-right: 1px solid var(--border);
     }
 
     .col-context .col-heading {
-      background: var(--paper);
+      background: var(--bg);
     }
 
     .no-selection {
       padding: 48px 24px;
       text-align: center;
-      color: var(--ink-muted);
+      color: var(--muted);
       font-size: .85rem;
       font-style: italic;
       line-height: 1.7;
@@ -219,7 +221,7 @@
       overflow: hidden;
     }
     .context-card-header {
-      background: var(--ink);
+      background: var(--text);
       color: var(--white);
       padding: 18px 20px;
     }
@@ -244,12 +246,12 @@
       padding: 2px 9px;
       border-radius: 10px;
     }
-    .gender-v { background: rgba(139,58,110,.35); color: #f0b8de; }
-    .gender-m { background: rgba(26,86,219,.28); color: #a8c0f8; }
+    .gender-v { background: rgba(124,58,237,.18); color: #c4b5fd; }
+    .gender-m { background: rgba(37,99,235,.18); color: #93c5fd; }
 
     .ctx-section {
       padding: 13px 20px;
-      border-bottom: 1px solid var(--paper-2);
+      border-bottom: 1px solid var(--bg-2);
     }
     .ctx-section:last-child { border-bottom: none; }
     .ctx-label {
@@ -257,37 +259,37 @@
       font-weight: 600;
       letter-spacing: .09em;
       text-transform: uppercase;
-      color: var(--ink-muted);
+      color: var(--muted);
       margin-bottom: 5px;
     }
     .ctx-value {
       font-size: .85rem;
-      color: var(--ink-soft);
+      color: var(--text-soft);
       line-height: 1.55;
     }
     .ctx-tag {
       display: inline-block;
-      background: var(--paper-2);
+      background: var(--bg-2);
       border: 1px solid var(--border);
       border-radius: 4px;
       padding: 2px 8px;
       font-size: .76rem;
-      color: var(--ink-soft);
+      color: var(--text-soft);
       margin: 2px 3px 2px 0;
     }
     .ctx-note {
-      background: var(--amber-pale);
-      border-left: 3px solid var(--amber);
+      background: var(--purple-light);
+      border-left: 3px solid var(--purple);
       border-radius: 0 6px 6px 0;
       padding: 9px 12px;
       font-size: .82rem;
-      color: var(--ink);
+      color: var(--text);
       line-height: 1.55;
     }
 
     /* ── Right: Werkruimte ── */
     .col-workspace {
-      background: var(--paper);
+      background: var(--bg);
       padding: 20px 22px 48px;
     }
 
@@ -304,23 +306,23 @@
     }
     .workspace-patient-bar .avatar {
       width: 32px; height: 32px;
-      background: var(--teal-pale);
+      background: var(--blue-light);
       border-radius: 50%;
       display: grid;
       place-items: center;
       flex-shrink: 0;
-      color: var(--teal-dark);
+      color: var(--blue-dark);
       font-size: .78rem;
       font-weight: 600;
     }
     .workspace-patient-name {
       font-weight: 500;
       font-size: .9rem;
-      color: var(--ink);
+      color: var(--text);
     }
     .workspace-patient-sub {
       font-size: .76rem;
-      color: var(--ink-muted);
+      color: var(--muted);
     }
     .workspace-no-patient {
       background: var(--white);
@@ -329,7 +331,7 @@
       padding: 12px 18px;
       margin-bottom: 18px;
       font-size: .83rem;
-      color: var(--ink-muted);
+      color: var(--muted);
       font-style: italic;
       text-align: center;
     }
@@ -346,7 +348,7 @@
     .card-title {
       font-family: 'DM Serif Display', serif;
       font-size: 1rem;
-      color: var(--ink);
+      color: var(--text);
       margin-bottom: 16px;
       display: flex;
       align-items: center;
@@ -354,7 +356,7 @@
     }
     .card-title .step {
       width: 22px; height: 22px;
-      background: var(--teal);
+      background: var(--blue);
       color: white;
       border-radius: 50%;
       font-family: 'DM Sans', sans-serif;
@@ -382,20 +384,20 @@
     }
     button:disabled { opacity: .45; cursor: not-allowed; }
 
-    .btn-primary  { background: var(--teal); color: white; }
-    .btn-primary:hover:not(:disabled)   { background: var(--teal-dark); }
+    .btn-primary  { background: var(--blue); color: white; }
+    .btn-primary:hover:not(:disabled)   { background: var(--blue-dark); }
     .btn-danger   { background: var(--red); color: white; }
     .btn-danger:hover:not(:disabled)    { background: #8a2a2a; }
-    .btn-secondary { background: var(--paper-2); color: var(--ink); border: 1px solid var(--border); }
+    .btn-secondary { background: var(--bg-2); color: var(--text); border: 1px solid var(--border); }
     .btn-secondary:hover:not(:disabled) { background: var(--border); }
     .btn-ghost {
       background: transparent;
-      color: var(--teal);
-      border: 1px solid var(--teal);
+      color: var(--blue);
+      border: 1px solid var(--blue);
       font-size: .78rem;
       padding: 6px 12px;
     }
-    .btn-ghost:hover:not(:disabled) { background: var(--teal-pale); }
+    .btn-ghost:hover:not(:disabled) { background: var(--blue-light); }
 
     /* ── Status pill ── */
     .status-pill {
@@ -407,10 +409,10 @@
       border-radius: 20px;
       font-weight: 500;
     }
-    .status-idle      { background: var(--paper-2); color: var(--ink-muted); }
+    .status-idle      { background: var(--bg-2); color: var(--muted); }
     .status-recording { background: #fdecea; color: var(--red); }
-    .status-processing { background: var(--teal-pale); color: var(--teal-dark); }
-    .status-done      { background: #eaf4ea; color: #1f7a35; }
+    .status-processing { background: var(--blue-light); color: var(--blue-dark); }
+    .status-done      { background: var(--green-light); color: var(--green); }
 
     .pulse-dot {
       width: 8px; height: 8px;
@@ -427,19 +429,19 @@
     .transcript-box {
       width: 100%;
       min-height: 90px;
-      background: var(--paper);
+      background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 7px;
       padding: 12px 14px;
       font-family: 'DM Sans', sans-serif;
       font-size: .83rem;
-      color: var(--ink-soft);
+      color: var(--text-soft);
       resize: vertical;
       outline: none;
       transition: border-color .15s;
       line-height: 1.6;
     }
-    .transcript-box:focus { border-color: var(--teal); }
+    .transcript-box:focus { border-color: var(--blue); }
 
     /* ── Output panels ── */
     .panels-grid {
@@ -478,15 +480,15 @@
       display: grid; place-items: center;
       flex-shrink: 0;
     }
-    .panel-icon.blue  { background: #e8f0fe; color: #1a56db; }
-    .panel-icon.green { background: #eaf7ec; color: #1a7a35; }
-    .panel-icon.amber { background: var(--amber-pale); color: var(--amber); }
+    .panel-icon.blue  { background: var(--blue-light); color: var(--blue-dark); }
+    .panel-icon.green { background: var(--green-light); color: var(--green); }
+    .panel-icon.amber { background: var(--purple-light); color: var(--purple); }
 
     .panel-body {
       padding: 14px 16px;
       flex: 1;
       font-size: .845rem;
-      color: var(--ink-soft);
+      color: var(--text-soft);
       white-space: pre-wrap;
       line-height: 1.7;
     }
@@ -494,7 +496,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--ink-muted);
+      color: var(--muted);
       font-style: italic;
       font-size: .8rem;
     }
@@ -506,18 +508,18 @@
       gap: 9px;
       align-items: flex-start;
       padding: 9px 11px;
-      background: var(--amber-pale);
-      border-left: 3px solid var(--amber);
+      background: var(--purple-light);
+      border-left: 3px solid var(--purple);
       border-radius: 0 6px 6px 0;
       font-size: .83rem;
       line-height: 1.5;
-      color: var(--ink);
+      color: var(--text);
     }
     .alert-list li::before {
       content: "!";
       width: 17px; height: 17px;
       min-width: 17px;
-      background: var(--amber);
+      background: var(--purple);
       color: white;
       border-radius: 50%;
       font-size: .68rem;
@@ -533,13 +535,13 @@
       justify-content: center;
       gap: 6px;
       padding: 20px;
-      color: var(--ink-muted);
+      color: var(--muted);
       font-size: .83rem;
     }
     .spinner {
       width: 16px; height: 16px;
       border: 2px solid var(--border);
-      border-top-color: var(--teal);
+      border-top-color: var(--blue);
       border-radius: 50%;
       animation: spin .7s linear infinite;
     }
@@ -549,7 +551,7 @@
     .toast {
       position: fixed;
       bottom: 22px; right: 22px;
-      background: var(--ink);
+      background: var(--text);
       color: white;
       padding: 11px 18px;
       border-radius: 8px;
@@ -579,7 +581,7 @@
       font-weight: 600;
       letter-spacing: .1em;
       text-transform: uppercase;
-      color: var(--ink-muted);
+      color: var(--muted);
       margin: 22px 0 12px;
     }
   </style>
@@ -594,7 +596,7 @@
     </svg>
   </div>
   <div>
-    <div class="header-title">Ambient AI Doktersassistent</div>
+    <div class="header-title">PraktijkAssistent</div>
     <div class="header-subtitle">Huisartsenpraktijk — Prototype MVP</div>
   </div>
   <div class="header-spacer"></div>
@@ -664,7 +666,7 @@
       <div class="card-title">
         <span class="step">2</span>
         Transcriptie
-        <span style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--ink-muted);font-weight:400">(automatisch ingevuld na opname)</span>
+        <span style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--muted);font-weight:400">(automatisch ingevuld na opname)</span>
       </div>
       <textarea class="transcript-box" id="transcript" rows="5"
         placeholder="De transcriptie verschijnt hier na de opname…"></textarea>
