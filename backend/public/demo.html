@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PraktijkAssistent — Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:        #2563EB;
+      --blue-dark:   #1D4ED8;
+      --blue-light:  #EFF6FF;
+      --purple:      #7C3AED;
+      --purple-light:#F5F3FF;
+      --green:       #16A34A;
+      --green-light: #F0FDF4;
+      --text:        #111827;
+      --text-soft:   #374151;
+      --muted:       #6B7280;
+      --border:      #E5E7EB;
+      --white:       #FFFFFF;
+      --bg:          #F8FAFC;
+      --bg-2:        #EFF2F7;
+      --red:         #b03535;
+      --red-pale:    #faeaea;
+      --shadow:      0 2px 12px rgba(17,24,39,.08);
+      --shadow-lg:   0 8px 32px rgba(17,24,39,.12);
+      --radius:      10px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      font-size: 15px;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--text);
+      color: var(--white);
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 16px rgba(0,0,0,.18);
+      flex-shrink: 0;
+      z-index: 100;
+    }
+    .logo-mark {
+      width: 36px; height: 36px;
+      background: var(--blue);
+      border-radius: 50%;
+      display: grid; place-items: center;
+      flex-shrink: 0;
+    }
+    .logo-mark svg { width: 18px; height: 18px; }
+    .header-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; letter-spacing: .01em; }
+    .header-subtitle { font-size: .72rem; color: #8fa3b0; margin-top: 1px; }
+    .header-spacer { flex: 1; }
+    .demo-badge {
+      font-size: .67rem;
+      background: rgba(37,99,235,.22);
+      color: #93c5fd;
+      border: 1px solid rgba(37,99,235,.35);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+      letter-spacing: .02em;
+    }
+    .disclaimer-badge {
+      font-size: .67rem;
+      background: rgba(124,58,237,.18);
+      color: #c4b5fd;
+      border: 1px solid rgba(124,58,237,.3);
+      padding: 5px 12px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 240px;
+      line-height: 1.4;
+    }
+
+    /* ── Dashboard layout ── */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 258px 300px 1fr;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* ── Column base ── */
+    .col-patients,
+    .col-context,
+    .col-workspace {
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    /* ── Left: Dagplanning ── */
+    .col-patients {
+      background: var(--white);
+      border-right: 1px solid var(--border);
+    }
+    .col-heading {
+      padding: 15px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--white);
+      z-index: 10;
+    }
+    .col-heading-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: .95rem;
+      color: var(--text);
+    }
+    .date-badge {
+      font-size: .72rem;
+      color: var(--muted);
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      padding: 3px 9px;
+      border-radius: 12px;
+    }
+    .patient-item {
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--bg-2);
+      border-left: 3px solid transparent;
+      display: grid;
+      grid-template-columns: 42px 1fr 10px;
+      gap: 10px;
+      align-items: start;
+    }
+    .patient-item.selected {
+      background: var(--blue-light);
+      border-left-color: var(--blue);
+    }
+    .patient-item.other {
+      opacity: .45;
+    }
+    .patient-time {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--muted);
+      padding-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+    .patient-name {
+      font-size: .875rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+    .patient-complaint {
+      font-size: .76rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .patient-status-row { margin-top: 5px; }
+    .patient-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: .7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+    .pill-active  { background: var(--blue-light); color: var(--blue-dark); }
+    .pill-planned { background: var(--bg-2); color: var(--muted); }
+    .pill-done    { background: var(--green-light); color: var(--green); }
+    .status-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    .dot-active  { background: var(--blue); }
+    .dot-planned { background: var(--border); }
+    .dot-done    { background: var(--green); }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .4; transform: scale(.7); }
+    }
+    .dot-active { animation: pulse 1.2s infinite; }
+
+    /* ── Middle: Contextkaart ── */
+    .col-context {
+      background: var(--bg);
+      border-right: 1px solid var(--border);
+    }
+    .col-context .col-heading { background: var(--bg); }
+
+    .context-card {
+      margin: 16px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .context-card-header {
+      background: var(--text);
+      color: var(--white);
+      padding: 18px 20px;
+    }
+    .ctx-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+      margin-bottom: 7px;
+    }
+    .ctx-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .ctx-meta-item { font-size: .76rem; color: #8fa3b0; }
+    .gender-pill {
+      font-size: .72rem;
+      font-weight: 600;
+      padding: 2px 9px;
+      border-radius: 10px;
+    }
+    .gender-v { background: rgba(124,58,237,.18); color: #c4b5fd; }
+
+    .ctx-section {
+      padding: 13px 20px;
+      border-bottom: 1px solid var(--bg-2);
+    }
+    .ctx-section:last-child { border-bottom: none; }
+    .ctx-label {
+      font-size: .67rem;
+      font-weight: 600;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .ctx-value {
+      font-size: .85rem;
+      color: var(--text-soft);
+      line-height: 1.55;
+    }
+    .ctx-tag {
+      display: inline-block;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: .76rem;
+      color: var(--text-soft);
+      margin: 2px 3px 2px 0;
+    }
+    .ctx-note {
+      background: var(--purple-light);
+      border-left: 3px solid var(--purple);
+      border-radius: 0 6px 6px 0;
+      padding: 9px 12px;
+      font-size: .82rem;
+      color: var(--text);
+      line-height: 1.55;
+    }
+    .ctx-note p { margin-bottom: 4px; }
+    .ctx-note p:last-child { margin-bottom: 0; }
+
+    /* ── Right: Werkruimte ── */
+    .col-workspace {
+      background: var(--bg);
+      padding: 20px 22px 48px;
+    }
+
+    .workspace-patient-bar {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 18px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow);
+    }
+    .avatar {
+      width: 32px; height: 32px;
+      background: var(--blue-light);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      color: var(--blue-dark);
+      font-size: .78rem;
+      font-weight: 600;
+    }
+    .workspace-patient-name { font-weight: 500; font-size: .9rem; color: var(--text); }
+    .workspace-patient-sub  { font-size: .76rem; color: var(--muted); }
+
+    /* ── Card ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 24px;
+      margin-bottom: 18px;
+    }
+    .card-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1rem;
+      color: var(--text);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .step {
+      width: 22px; height: 22px;
+      background: var(--blue);
+      color: white;
+      border-radius: 50%;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .72rem;
+      font-weight: 600;
+      display: grid; place-items: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Transcript box ── */
+    .transcript-box {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 12px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .83rem;
+      color: var(--text-soft);
+      line-height: 1.65;
+      white-space: pre-wrap;
+    }
+
+    /* ── Section label & demo label ── */
+    .section-label {
+      font-size: .68rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 22px 0 8px;
+    }
+    .demo-label {
+      font-size: .78rem;
+      font-weight: 500;
+      color: var(--blue-dark);
+      background: var(--blue-light);
+      border: 1px solid rgba(37,99,235,.22);
+      border-radius: 6px;
+      padding: 7px 12px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      line-height: 1.5;
+    }
+    .demo-label svg { flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Output panels ── */
+    .panels-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .output-panel {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      min-height: 200px;
+    }
+    .panel-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-label {
+      font-family: 'DM Serif Display', serif;
+      font-size: .88rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-icon {
+      width: 26px; height: 26px;
+      border-radius: 6px;
+      display: grid; place-items: center;
+      flex-shrink: 0;
+    }
+    .panel-icon.blue   { background: var(--blue-light);   color: var(--blue-dark); }
+    .panel-icon.green  { background: var(--green-light);  color: var(--green); }
+    .panel-icon.purple { background: var(--purple-light); color: var(--purple); }
+
+    .panel-body {
+      padding: 14px 16px;
+      flex: 1;
+      font-size: .845rem;
+      color: var(--text-soft);
+      line-height: 1.7;
+    }
+
+    /* SOEP sections */
+    .soep-block { margin-bottom: 10px; }
+    .soep-block:last-child { margin-bottom: 0; }
+    .soep-label {
+      font-size: .67rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--blue-dark);
+      margin-bottom: 2px;
+    }
+    .soep-text { font-size: .82rem; color: var(--text-soft); line-height: 1.6; }
+
+    /* Alerts */
+    .alert-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .alert-list li {
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+      padding: 8px 11px;
+      background: var(--purple-light);
+      border-left: 3px solid var(--purple);
+      border-radius: 0 6px 6px 0;
+      font-size: .8rem;
+      line-height: 1.5;
+      color: var(--text);
+    }
+    .alert-list li::before {
+      content: "!";
+      width: 17px; height: 17px;
+      min-width: 17px;
+      background: var(--purple);
+      color: white;
+      border-radius: 50%;
+      font-size: .68rem;
+      font-weight: 700;
+      display: grid; place-items: center;
+      margin-top: 1px;
+    }
+    .alert-letp {
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      background: #FFF7ED;
+      border: 1px solid #FB923C;
+      border-left: 4px solid #EA580C;
+      border-radius: 0 6px 6px 0;
+      font-size: .82rem;
+      font-weight: 600;
+      line-height: 1.5;
+      color: #7C2D12;
+      margin-top: 4px;
+    }
+    .alert-letp svg { flex-shrink: 0; margin-top: 1px; color: #EA580C; }
+  </style>
+</head>
+<body>
+
+<!-- ─── Header ─── -->
+<header>
+  <div class="logo-mark">
+    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+    </svg>
+  </div>
+  <div>
+    <div class="header-title">PraktijkAssistent</div>
+    <div class="header-subtitle">Huisartsenpraktijk — Prototype MVP</div>
+  </div>
+  <div class="header-spacer"></div>
+  <div class="demo-badge">✦ Interactieve demo</div>
+  &nbsp;&nbsp;
+  <div class="disclaimer-badge">
+    ⚠️ Prototype. Alleen ter ondersteuning.<br>De arts blijft volledig verantwoordelijk.
+  </div>
+</header>
+
+<!-- ─── Dashboard ─── -->
+<div class="dashboard">
+
+  <!-- ── Kolom 1: Dagplanning ── -->
+  <aside class="col-patients">
+    <div class="col-heading">
+      <span class="col-heading-title">Dagplanning</span>
+      <span class="date-badge">do 19 mrt</span>
+    </div>
+
+    <!-- Maria — actief -->
+    <div class="patient-item selected">
+      <div class="patient-time">09:00</div>
+      <div>
+        <div class="patient-name">Maria van den Berg</div>
+        <div class="patient-complaint">Tweede consult – aanhoudende moeheid en benauwdheid</div>
+        <div class="patient-status-row">
+          <span class="patient-status-pill pill-active">Actief</span>
+        </div>
+      </div>
+      <div class="status-dot dot-active"></div>
+    </div>
+
+    <!-- Overige patiënten (gedempt) -->
+    <div class="patient-item other">
+      <div class="patient-time">09:30</div>
+      <div>
+        <div class="patient-name">Thomas Bakker</div>
+        <div class="patient-complaint">Rugpijn (terugkerend)</div>
+        <div class="patient-status-row">
+          <span class="patient-status-pill pill-planned">Gepland</span>
+        </div>
+      </div>
+      <div class="status-dot dot-planned"></div>
+    </div>
+    <div class="patient-item other">
+      <div class="patient-time">10:00</div>
+      <div>
+        <div class="patient-name">Lisa Smits</div>
+        <div class="patient-complaint">Buikpijn &amp; opgeblazen gevoel</div>
+        <div class="patient-status-row">
+          <span class="patient-status-pill pill-planned">Gepland</span>
+        </div>
+      </div>
+      <div class="status-dot dot-planned"></div>
+    </div>
+    <div class="patient-item other">
+      <div class="patient-time">10:30</div>
+      <div>
+        <div class="patient-name">Jan de Vries</div>
+        <div class="patient-complaint">Bloeddrukcontrole</div>
+        <div class="patient-status-row">
+          <span class="patient-status-pill pill-planned">Gepland</span>
+        </div>
+      </div>
+      <div class="status-dot dot-planned"></div>
+    </div>
+    <div class="patient-item other">
+      <div class="patient-time">11:00</div>
+      <div>
+        <div class="patient-name">Emma Konings</div>
+        <div class="patient-complaint">Hoofdpijn (chronisch)</div>
+        <div class="patient-status-row">
+          <span class="patient-status-pill pill-planned">Gepland</span>
+        </div>
+      </div>
+      <div class="status-dot dot-planned"></div>
+    </div>
+  </aside>
+
+  <!-- ── Kolom 2: Contextkaart ── -->
+  <section class="col-context">
+    <div class="col-heading">
+      <span class="col-heading-title">Contextkaart</span>
+    </div>
+    <div class="context-card">
+      <div class="context-card-header">
+        <div class="ctx-name">Maria van den Berg</div>
+        <div class="ctx-meta">
+          <span class="ctx-meta-item">52 jaar</span>
+          <span class="gender-pill gender-v">♀ Vrouw</span>
+          <span class="ctx-meta-item">BSN ••• ***</span>
+        </div>
+      </div>
+
+      <div class="ctx-section">
+        <div class="ctx-label">Huidige klacht</div>
+        <div class="ctx-value">Aanhoudende moeheid, sneller buiten adem, misselijkheid, drukkend gevoel bovenrug</div>
+      </div>
+
+      <div class="ctx-section">
+        <div class="ctx-label">Voorgeschiedenis</div>
+        <div class="ctx-value">
+          <span class="ctx-tag">Eerder gezien met vergelijkbare klachten</span>
+          <span class="ctx-tag">Werkdiagnose: stress-/angstklachten</span>
+        </div>
+      </div>
+
+      <div class="ctx-section">
+        <div class="ctx-label">Eerder behandelplan</div>
+        <div class="ctx-value">Uitleg en geruststelling · Advies rust en stressreductie · Controle afgesproken</div>
+      </div>
+
+      <div class="ctx-section">
+        <div class="ctx-label">Beloop</div>
+        <div class="ctx-value">Klachten zijn niet verbeterd. Patiënt komt terug omdat moeheid, benauwdheid en drukkend gevoel blijven bestaan.</div>
+      </div>
+
+      <div class="ctx-section">
+        <div class="ctx-label">Laatste bezoek</div>
+        <div class="ctx-value">2 weken geleden</div>
+      </div>
+
+      <div class="ctx-section">
+        <div class="ctx-label">Notities</div>
+        <div class="ctx-value">
+          <div class="ctx-note">
+            <p>Geen duidelijke typische pijn op de borst.</p>
+            <p>Klachten vooral merkbaar bij inspanning, zoals traplopen.</p>
+            <p>Patiënt dacht eerder zelf ook aan stress of angst.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Kolom 3: Werkruimte ── -->
+  <section class="col-workspace">
+
+    <!-- Patiëntbalk -->
+    <div class="workspace-patient-bar">
+      <div class="avatar">MB</div>
+      <div>
+        <div class="workspace-patient-name">Maria van den Berg</div>
+        <div class="workspace-patient-sub">52 jaar · Tweede consult – aanhoudende moeheid en benauwdheid · 09:00</div>
+      </div>
+    </div>
+
+    <!-- Transcriptie -->
+    <div class="card">
+      <div class="card-title">
+        <span class="step">2</span>
+        Transcriptie
+        <span style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--muted);font-weight:400">(automatisch ingevuld na opname)</span>
+      </div>
+      <div class="transcript-box">Arts: Fijn dat u er weer bent. Kunt u vertellen hoe het sinds het vorige consult is gegaan?
+Patiënt: Eigenlijk niet beter. Ik voel me nog steeds niet goed en ik ben heel snel moe.
+Arts: Kunt u beschrijven wanneer u daar vooral last van heeft?
+Patiënt: Vooral als ik de trap op loop of iets sneller moet doen. Dan ben ik veel sneller buiten adem dan normaal.
+Arts: Zijn er nog andere dingen die u opvallen?
+Patiënt: Ja, soms ben ik misselijk en ik heb een vreemd drukkend gevoel bovenin mijn rug, tussen mijn schouderbladen.
+Arts: Is dat veranderd sinds de vorige keer?
+Patiënt: Ja, het blijft eigenlijk terugkomen. Daarom dacht ik: dit klopt toch niet helemaal.
+Arts: Waar dacht u zelf aan?
+Patiënt: Eerst aan stress of angst, maar omdat het niet overgaat vertrouw ik het niet zo.
+Arts: Zijn er nog andere dingen die u merkt?
+Patiënt: Soms word ik ineens een beetje klam en licht in mijn hoofd.</div>
+    </div>
+
+    <!-- AI-uitvoer label -->
+    <div class="section-label">AI-uitvoer</div>
+    <div class="demo-label">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Demo: PraktijkAssistent laat zien dat een eerdere interpretatie van stress- of angstklachten heroverwogen moet worden bij een vrouwelijke patiënt met aanhoudende klachten.
+    </div>
+
+    <!-- Drie panelen -->
+    <div class="panels-grid">
+
+      <!-- Paneel A: SOEP-verslag -->
+      <div class="output-panel">
+        <div class="panel-header">
+          <div class="panel-label">
+            <div class="panel-icon blue">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            Medisch verslag (SOEP)
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="soep-block">
+            <div class="soep-label">S</div>
+            <div class="soep-text">52-jarige vrouw, tweede consult wegens persisterende klachten. Aanhoudende vermoeidheid, kortademigheid bij inspanning, misselijkheid, drukkend gevoel tussen de schouderbladen, episodes van klam zweten en licht gevoel in het hoofd. Geen uitgesproken thoracale pijn. Eerdere werkdiagnose stress-/angstklachten zonder voldoende verbetering.</div>
+          </div>
+          <div class="soep-block">
+            <div class="soep-label">O</div>
+            <div class="soep-text">Tweede presentatie met vergelijkbaar klachtenpatroon. Eerder conservatief beleid gericht op stressreductie en afwachten had onvoldoende effect.</div>
+          </div>
+          <div class="soep-block">
+            <div class="soep-label">E</div>
+            <div class="soep-text">Eerdere interpretatie als stress-/angstklachten verklaart het persisterende en inspanningsgebonden klachtenpatroon onvoldoende. Differentiaaldiagnostisch moeten ook cardiale oorzaken worden overwogen, mede gezien mogelijke atypische presentatie bij vrouwen.</div>
+          </div>
+          <div class="soep-block">
+            <div class="soep-label">P</div>
+            <div class="soep-text">Herzie de eerdere werkdiagnose. Overweeg ECG, vitale parameters en laagdrempelige cardiovasculaire beoordeling. Wees alert op mogelijke atypische cardiale presentatie.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paneel B: Patiëntuitleg -->
+      <div class="output-panel">
+        <div class="panel-header">
+          <div class="panel-label">
+            <div class="panel-icon green">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+            Uitleg voor patiënt
+          </div>
+        </div>
+        <div class="panel-body">
+          Uw klachten zijn eerder benaderd als stress- of spanningsklachten, maar omdat ze blijven bestaan en niet voldoende verbeteren, is het belangrijk om opnieuw breder te kijken.<br><br>
+          Hartklachten kunnen zich bij vrouwen soms anders presenteren dan alleen met duidelijke pijn op de borst. Klachten zoals vermoeidheid, kortademigheid bij inspanning, een drukkend gevoel in de rug en misselijkheid kunnen hier ook bij horen.<br><br>
+          Daarom is het verstandig om dit verder medisch te beoordelen, onder andere met een hartfilmpje (ECG). Wij nemen contact op zodra er meer duidelijkheid is, of als er reden is om u eerder te zien.
+        </div>
+      </div>
+
+      <!-- Paneel C: Aandachtspunten arts -->
+      <div class="output-panel">
+        <div class="panel-header">
+          <div class="panel-label">
+            <div class="panel-icon purple">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            Aandachtspunten arts
+          </div>
+        </div>
+        <div class="panel-body">
+          <ul class="alert-list">
+            <li>Patiënt presenteert zich voor de tweede keer met vergelijkbare klachten. Eerder beleid gericht op stress-/angstklachten had onvoldoende effect — herzie de werkdiagnose.</li>
+            <li>Bij vrouwen kunnen cardiale klachten zich presenteren zonder uitgesproken borstpijn. Let op de combinatie: inspanningsgebonden kortademigheid, ongewone vermoeidheid, misselijkheid, druk tussen de schouderbladen en klam zweten.</li>
+            <li>Overweeg ECG en cardiovasculaire beoordeling met lage drempel. Mogelijke genderbias: persisterende aspecifieke klachten bij vrouwen worden relatief vaker niet-cardiaal geïnterpreteerd.</li>
+          </ul>
+          <div class="alert-letp">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Let op: heroverweeg de eerdere stress/angst-interpretatie — mogelijke cardiale presentatie bij vrouw zonder typische borstpijn.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
